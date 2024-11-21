@@ -176,3 +176,9 @@ class Chord:
         transposed_main_tone = Tone(VALID_TONES_LIST[transposed_main_tone_index])
 
         return Chord(transposed_main_tone, *transposed_tones)
+
+interval = Interval(5)
+chord = Chord(Tone("C"), Tone("E"), Tone("G"))
+with self.assertRaises(TypeError) as e:
+    result = interval - chord
+self.assertEqual(str(e.exception), "Invalid operation")
