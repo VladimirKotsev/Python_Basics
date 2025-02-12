@@ -1,176 +1,282 @@
 import unittest
-from Homework4 import *
+import importlib
+from unittest.mock import patch, call
+
+import Homework5
 
 
-class BaseMaterialsTests(unittest.TestCase):
-    """
-    in these tests expected_density is mass and all check if expected_density/mass == 1.0
-    also they test decimal places for volume
-    """
+class TestFifthHomework(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.factory = Factory()
+        class BulgarianKid(metaclass=Homework5.Kid):
+            def __call__(self, present):
+                pass
 
-    def test_density_for_concrete(self):
-        expected_density = 2500
-        concrete, = self.factory(Concrete=expected_density)
-        self.assertEqual(concrete.volume, 1.0)
+            def be_bad_kid(self):
+                raise ValueError("I am going to 33")
 
-    def test_density_for_brick(self):
-        expected_density = 2000
-        brick, = self.factory(Brick=expected_density)
-        self.assertEqual(brick.volume, 1.0)
+        class ChineseKid(metaclass=Homework5.Kid):
+            def __call__(self, present):
+                pass
 
-    def test_density_for_stone(self):
-        expected_density = 1600
-        stone, = self.factory(Stone=expected_density)
-        self.assertEqual(stone.volume, 1.0)
+        class NigerianKid(metaclass=Homework5.Kid):
+            def __call__(self, present):
+                pass
 
-    def test_density_for_wood(self):
-        expected_density = 600
-        wood, = self.factory(Wood=expected_density)
-        self.assertEqual(wood.volume, 1.0)
+            def kill_people(self):
+                raise ValueError("There is no fun like 33")
 
-    def test_density_for_steel(self):
-        expected_density = 7700
-        steel, = self.factory(Steel=expected_density)
-        self.assertEqual(steel.volume, 1.0)
+        self.bulgarian_kid_class = BulgarianKid
+        self.chinese_kid_class = ChineseKid
+        self.nigerian_kid_class = NigerianKid
+        self.santa = Homework5.Santa()
 
-    def test_for_volume_decimal_places_if_one_decimal_places(self):
-        expected_density = 7700 * 7
-        steel, = self.factory(Steel=expected_density)
-        self.assertEqual(steel.volume, 7.0)
-        self.assertIsInstance(steel.volume, float)
+        def get_letter_1(kid):
+            return f""" Здрасти Дядо Коледа,
+                Бях относително добро дете
+                Моля купи ми "   LADA NIVA"
+                Поздрави,
+                          {id(kid)}
+            """
 
-    def test_for_volume_decimal_places_if_more_than_places_up(self):
-        # от задачата разбирам че просто трябва резултата да се форматира до 2рия знак
-        # ако не е така да ме поправи някой :)
-        # 4453/7700 = 0.5783116883116883 =&gt; 0.58
-        expected_density = 4453
-        steel, = self.factory(Steel=expected_density)
-        self.assertEqual(steel.volume, 0.5783116883116883)
-        self.assertIsInstance(steel.volume, float)
+        def get_letter_1_not_signed():
+            return f""" Здрасти Дядо Коледа,
+                            Бях относително добро дете
+                            Моля купи ми "   LADA NIVA 2025 "
+                            Поздрави,
+                        """
 
-    def test_for_volume_decimal_places_if_more_than_places_down(self):
-        # 4453/600 = 7.421666666666667 =&gt; 7.42
-        expected_density = 4453
-        steel, = self.factory(Wood=expected_density)
-        self.assertAlmostEqual(steel.volume, 7.42, places=2)
-        self.assertIsInstance(steel.volume, float)
+        def get_letter_2_(kid):
+            return f""" Здрасти Дядо Коледа,
+                                        Нямам добри оценки, но поне имам добро сърце
+                                        Моля купи ми "dvokolka s turbo"
+                                        Поздрави,
+                                        {id(kid)}
+                                    """
 
+        def get_letter_2_not_signed():
+            return f""" Здрасти Дядо Коледа,
+                                        Нямам добри оценки, но поне имам добро сърце
+                                        Моля купи ми "dvokolka s turbo"
+                                        Поздрави,
+                                    """
 
-class FactoryTests(unittest.TestCase):
-    def setUp(self):
-        self.factory1 = Factory()
-        self.factory2 = Factory()
+        self.get_letter_1 = get_letter_1
+        self.get_letter_1_not_signed = get_letter_1_not_signed
+        self.get_letter_2 = get_letter_2_
+        self.get_letter_2_not_signed = get_letter_2_not_signed
 
-        self.wood1, self.steel1, self.brick1, self.stone1, self.concrete1 = self.factory1(Wood=5, Steel=15, Brick=60,
-                                                                                          Stone=300, Concrete=20)
-        self.wood2, self.steel2, self.brick2, self.stone2, self.concrete2 = self.factory2(Wood=5, Steel=30, Brick=300,
-                                                                                          Stone=600, Concrete=2000)
+    def tearDown(self) -> None:
+        importlib.reload(Homework5)
 
-    def test_factory_invalid_call_with_empy_call(self):
-        with self.assertRaises(ValueError):
-            self.factory1()
+    def test_kid_metaclass_instances_throw_not_implemented_if___call___not_defined_in_derived_class(self):
+        with self.assertRaises(NotImplementedError):
+            class InvalidKidClass(metaclass=Homework5.Kid):
+                pass
 
-    def test_factory_invalid_call_with_args_and_kwargs(self):
-        with self.assertRaises(ValueError):
-            self.factory1(self.wood1, Wood=5)
+    def test_santa_is_singleton(self):
+        s1 = Homework5.Santa()
+        s2 = Homework5.Santa()
+        self.assertIs(s1, s2)
 
-    def test_factory_return_type(self):
-        self.assertIsInstance(self.factory2(Wood=66), tuple)
+    def test_a_kid_is_bad_kid_in_xmas_with_other_good_kid(self):
+        chinese_kid = self.chinese_kid_class()
+        self.santa @ self.get_letter_1(chinese_kid)
+        nigerian_kid = self.nigerian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
+        with patch.object(self.nigerian_kid_class, "__call__") as mock:
+            self.santa.xmas()
+            mock.assert_called_with("coal")
 
-    def test_two_factories_with_same_passed_arguments_produce_different_objects_of_same_type(self):
-        self.assertEqual(type(self.wood1), type(self.wood2))
-        self.assertEqual(self.wood1.volume, self.wood2.volume)
-        self.assertNotEqual(self.wood1, self.wood2)
+    def test_most_wanted_present_is_derived_from_good_kids(self):
+        nigerian_kid = self.nigerian_kid_class()
+        bulgarian_kid = self.bulgarian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
 
-    def test_factory_call_with_kwargs_with_not_existing_class(self):
-        with self.assertRaises(ValueError):
-            self.factory1(Baba=1)
+        try:
+            bulgarian_kid.be_bad_kid()
+        except ValueError:
+            pass
+        chinese_kid = self.chinese_kid_class()
+        self.santa @ self.get_letter_1(chinese_kid)
+        with patch.object(self.nigerian_kid_class, "__call__") as nig_mock, \
+                patch.object(self.chinese_kid_class, "__call__") as chin_mock, \
+                patch.object(self.bulgarian_kid_class, "__call__") as bulg_mock:
+            self.santa.xmas()
+            nig_mock.assert_called_once_with("coal")
+            bulg_mock.assert_called_once_with("coal")
+            chin_mock.assert_called_once_with("   LADA NIVA")
 
-    def test_volume_for_all_instances_returned_from_factory_call_kwargs(self):
-        wood, steel, stone = self.factory1(Wood=600, Steel=100, Stone=3200)
-        self.assertAlmostEqual(wood.volume, 1.0, )
-        self.assertAlmostEqual(steel.volume, 0.012987012987012988)
-        self.assertAlmostEqual(stone.volume, 2.0)
+    def test_only_bad_children_no_one_gets_present(self):
+        nigerian_kid = self.nigerian_kid_class()
+        bulgarian_kid = self.bulgarian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
 
-    def test_for_recreating_already_existing_dynamic_class(self):
-        wooden_steel = self.factory1(self.wood1, self.steel1)
-        self.assertEqual(wooden_steel.__class__.__name__, "Steel_Wood")
-        another_wooden_steel = self.factory1(self.wood2, self.steel2)
-        self.assertEqual(type(wooden_steel), type(another_wooden_steel))
+        try:
+            bulgarian_kid.be_bad_kid()
+        except ValueError:
+            pass
 
-    def test_for_reusing_same_materials_for_creation(self):
-        self.factory1(self.wood1, self.steel2)
-        with self.assertRaises(AssertionError):
-            self.factory1(self.wood1)
+        with patch.object(self.nigerian_kid_class, "__call__") as nig_mock, \
+                patch.object(self.nigerian_kid_class, "__call__") as bulg_mock:
+            self.santa.xmas()
+            nig_mock.assert_not_called()
+            bulg_mock.assert_not_called()
 
-    def test_new_generated_class_name_is_sorted_in_ascending_order(self):
-        result = self.factory1(self.wood1, self.steel1, self.brick1)
-        self.assertEqual(result.__class__.__name__, "Brick_Steel_Wood")
+    def test_good_kids_get_most_wanted_present_and_bad_kids_dont(self):
+        nigerian_kid = self.nigerian_kid_class()
+        bulgarian_kid = self.bulgarian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
 
-        result = self.factory1(self.stone1, self.steel2, self.wood2, )
-        self.assertEqual(result.__class__.__name__, "Steel_Stone_Wood")
+        try:
+            bulgarian_kid.be_bad_kid()
+        except ValueError:
+            pass
 
-    def test_new_generated_class_name_is_sorted_in_ascending_order2(self):
-        result = self.factory1(self.wood1, self.steel2, self.stone2, self.brick1, self.concrete1)
-        self.assertEqual(result.__class__.__name__, "Brick_Concrete_Steel_Stone_Wood")
+        bulgarian_kid_2 = self.bulgarian_kid_class()
+        chinese_kid_1 = self.chinese_kid_class()
+        chinese_kid_2 = self.chinese_kid_class()
+        nigerian_kid_2 = self.nigerian_kid_class()
+        nigerian_kid_3 = self.nigerian_kid_class()
+        chinese_kid_3 = self.chinese_kid_class()
 
-    def test_volume_and_density_for_dynamically_created_materials(self):
-        # density = (2500 + 7700 + 600) / 3 = 3600.
-        # mass = 5 + 30 + 2000 = 2035
-        # volume = 2035 / 3600 = 0.5652777777777778 = 0.57
-        result = self.factory1(self.wood1, self.steel2, self.concrete2)
-        self.assertAlmostEqual(result.volume, 0.5652777777777778)
+        self.santa @ self.get_letter_1(bulgarian_kid_2)
+        self.santa @ self.get_letter_1(chinese_kid_1)
+        self.santa @ self.get_letter_2(chinese_kid_2)
 
-    def test_different_factories_called_with_same_kwargs_return_materials_of_same_type(self):
-        steel_stone = self.factory1(Stone=1, Steel=1)
-        another_steel_stone = self.factory2(Steel=1, Stone=1)
-        self.assertEqual(type(steel_stone), type(another_steel_stone))
+        with patch.object(self.nigerian_kid_class, "__call__") as nig_mock, \
+                patch.object(self.chinese_kid_class, "__call__") as chin_mock, \
+                patch.object(self.bulgarian_kid_class, "__call__") as bulg_mock:
+            self.santa.xmas()
+            self.assertEqual(nig_mock.call_count, 3)
+            self.assertEqual(chin_mock.call_count, 3)
+            self.assertEqual(bulg_mock.call_count, 2)
+            self.assert_mock_called_with_arguments_n_times(chin_mock, 2, "   LADA NIVA")
+            self.assert_mock_called_with_arguments_n_times(chin_mock, 1, "dvokolka s turbo")
+            self.assert_mock_called_with_arguments_n_times(nig_mock, 1, "coal")
+            self.assert_mock_called_with_arguments_n_times(nig_mock, 2, "   LADA NIVA")
+            self.assert_mock_called_with_arguments_n_times(bulg_mock, 1, "   LADA NIVA")
+            self.assert_mock_called_with_arguments_n_times(bulg_mock, 1, "coal")
 
-    def test_one_factory_use_material_and_another_tries_to_use_it_and_fails(self):
-        steel_stone = self.factory1(self.steel2, self.stone1)
-        self.factory1(steel_stone)
-        with self.assertRaises(AssertionError):
-            self.factory2(self.wood1, steel_stone)
+    def assert_mock_called_with_arguments_n_times(self, mock, times, *args):
+        current = call(*args)
+        filtered_args = [c for c in mock.call_args_list if c == current]
+        self.assertEqual(len(filtered_args), times)
 
-    def test_build_method_returns_true_for_greater_than_volume(self):
-        factory = Factory()
-        factory(Brick(2500))
-        self.assertTrue(factory.can_build(1))
+    def test_bad_kid_does_bad_things_and_then_tries_to_get_present_and_fails(self):
+        nigerian_kid = self.nigerian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
 
-    def test_build_method_returns_true_for_equal_volume(self):
-        factory = Factory()
-        factory(Brick(2000))
-        self.assertTrue(factory.can_build(1))
+        self.santa @ self.get_letter_1(nigerian_kid)
+        with patch.object(self.nigerian_kid_class, "__call__") as mock:
+            self.santa.xmas()
+            mock.assert_called_once_with("coal")
 
-    def test_build_method_returns_false(self):
-        factory = Factory()
-        factory(Brick(1500))
-        self.assertFalse(factory.can_build(1))
+    def test_iterate_santa_more_than_ones(self):
+        bulgarian_kid = self.bulgarian_kid_class()
+        self.santa @ self.get_letter_2(bulgarian_kid)
+        for index in range(2):
+            for present in self.santa:
+                self.assertEqual(present, "dvokolka s turbo")
 
-    def test_build_method_with_many_materials_returns_false(self):
-        factory1 = Factory()
-        brick1, wood1 = factory1(Brick=2000, Wood=1200)
-        brick_wood1 = factory1(brick1, wood1)
-        self.assertEqual(factory1.can_build(3), False)
+    @unittest.skip("Не съм сигурен дали можем да преизползваме една iterator instance")
+    def test_iterator_reset(self):
+        bulgarian_kid = self.bulgarian_kid_class()
+        self.santa @ self.get_letter_2(bulgarian_kid)
 
-    def test_build_method_with_many_materials_returns_true(self):
-        # density = (2000+ 600+7700) / 3 = 3433.3333333333335
-        # mass = 2000 + 1000 + 70000 = 73000
-        # volume = 73000 / 3433.3333333333335 = 21.262135922330096 = 21.2
-        factory1 = Factory()
-        brick1, wood1, steel = factory1(Brick=2000, Wood=1000, Steel=70000)
-        factory1(brick1, wood1, steel)
-        self.assertTrue(factory1.can_build(21.26))
-        self.assertEqual(factory1.can_build(21.27), False)
+        iterator = iter(self.santa)
+        for index in range(2):
+            for present in iterator:
+                self.assertEqual(present, "dvokolka s turbo")
 
-    def test_string_after_combination(self):
-        result1 = self.factory1(self.wood1, self.brick1)
-        result2 = self.factory2(self.concrete2, self.stone1)
-        result = self.factory1(result1, result2)
-        self.assertEqual(result.__class__.__name__, "Brick_Concrete_Stone_Wood")
+    def test_kid_overrides_its_present_and_order_doesnt_change(self):
+        bulgarian_kid = self.bulgarian_kid_class()
+        chinese_kid = self.chinese_kid_class()
+        self.santa(bulgarian_kid, '"skuter"')
+        self.santa(chinese_kid, "'kniga'")
+        self.santa(bulgarian_kid, "'vodka'")
 
-if __name__ == "__main__":
-    unittest.main()
+        results = ["vodka", "kniga"]
+        for index, element in enumerate(self.santa):
+            self.assertEqual(results[index], element)
+
+    def test_empty_iterator_after_xmas(self):
+        nigerian_kid = self.nigerian_kid_class()
+        bulgarian_kid = self.bulgarian_kid_class()
+
+        self.santa(nigerian_kid, self.get_letter_1_not_signed())
+        self.santa(bulgarian_kid, self.get_letter_2_not_signed())
+
+        results = ["   LADA NIVA 2025 ", "dvokolka s turbo"]
+        for index, present in enumerate(self.santa):
+            self.assertEqual(results[index], present)
+        self.santa.xmas()
+        iterator = iter(self.santa)
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+    def test_empty_iterator_on_load(self):
+        iterator = iter(self.santa)
+        with self.assertRaises(StopIteration):
+            next(iterator)
+
+    def test_bad_child_wants_present_and_other_children_with_no_wanted_presents_take_it(self):
+        nigerian_kid = self.nigerian_kid_class()
+        chinese_kid = self.chinese_kid_class()
+        bulgarian_kid = self.bulgarian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
+        self.santa(nigerian_kid, self.get_letter_2_not_signed())
+        with patch.object(self.nigerian_kid_class, "__call__") as nig_mock, \
+                patch.object(self.bulgarian_kid_class, "__call__") as bulg_mock, \
+                patch.object(self.chinese_kid_class, "__call__") as chin_mock:
+            self.santa.xmas()
+            nig_mock.assert_called_once_with("coal")
+            bulg_mock.assert_called_once_with("dvokolka s turbo")
+            chin_mock.assert_called_once_with("dvokolka s turbo")
+
+    def test_bad_kid_reset_for_next_xmas(self):
+        nigerian_kid = self.nigerian_kid_class()
+        try:
+            nigerian_kid.kill_people()
+        except ValueError:
+            pass
+        self.santa(nigerian_kid, self.get_letter_2_not_signed())
+        with patch.object(self.nigerian_kid_class, "__call__") as mock:
+            self.santa.xmas()
+            mock.assert_called_once_with("coal")
+
+        self.santa(nigerian_kid, self.get_letter_2_not_signed())
+        with patch.object(self.nigerian_kid_class, "__call__") as mock:
+            self.santa.xmas()
+            mock.assert_called_once_with("dvokolka s turbo")
+
+    def test_kids_grow_up_even_no_wants_sends_present_and_xmas_is_trigged(self):
+        nigerian_kid = self.nigerian_kid_class()
+        for i in range(5):
+            self.santa.xmas()
+        chinese_kid = self.chinese_kid_class()
+        self.santa(chinese_kid, self.get_letter_2_not_signed())
+
+        with patch.object(self.chinese_kid_class, "__call__") as chin_mock, \
+                patch.object(self.nigerian_kid_class, "__call__") as nig_mock:
+            self.santa.xmas()
+            chin_mock.assert_called_once_with("dvokolka s turbo")
+            nig_mock.assert_not_called()
